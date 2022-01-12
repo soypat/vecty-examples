@@ -1,12 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
-	"syscall/js"
 	"time"
 
-	"github.com/soypat/vecty-examples/svg"
+	"github.com/soypat/vecty-examples/util/jlog"
+	"github.com/soypat/vecty-examples/util/svg"
 
 	"github.com/hexops/vecty"
 	"github.com/hexops/vecty/elem"
@@ -68,6 +67,16 @@ type Model struct {
 	food  vec
 	msgs  chan msg
 }
+type vec struct {
+	x, y int
+}
+
+type gamestate int
+
+const (
+	play gamestate = iota
+	lose
+)
 
 func (m *Model) update(action msg) {
 	var facing direction
@@ -118,18 +127,18 @@ func (m *Model) update(action msg) {
 	newHead := m.snek[0]
 	for i, v := range m.snek[1:] {
 		if v.x == newHead.x && v.y == newHead.y {
-			log("lose bodypart/vec", i, v, "to head position", newHead)
+			jlog.Debug("lose bodypart/vec", i, v, "to head position", newHead)
 			m.state = lose
 		}
 	}
 	if newHead == m.food {
 		m.food = vec{rand.Intn(svgW), rand.Intn(svgH)}
-		log("new food at", m.food)
+		jlog.Debug("new food at", m.food)
 	} else {
 		m.snek = m.snek[:len(m.snek)-1]
 	}
 
-	log(m.snek)
+	jlog.Debug(m.snek)
 	vecty.Rerender(m)
 }
 
@@ -144,7 +153,7 @@ func (m *Model) Render() vecty.ComponentOrHTML {
 		r := svg.NewRect("red", m.snek[i].x*svgPix, m.snek[i].y*svgPix, svgPix, svgPix)
 		s.Add(r)
 	}
-	log(s)
+	jlog.Debug(s)
 	return elem.Body(
 		vecty.If(m.state == play, elem.Paragraph(
 			vecty.Markup(vecty.UnsafeHTML("Use Arrow keys to move.")),
@@ -165,10 +174,10 @@ func (m *Model) Render() vecty.ComponentOrHTML {
 				case "ArrowRight":
 					action.dir = dirRight
 				default:
-					log("do nothing, invalid keydown")
+					jlog.Debug("do nothing, invalid keydown")
 					return
 				}
-				log("update ready")
+				jlog.Debug("update ready")
 				m.msgs <- action
 			}),
 		),
@@ -176,19 +185,4 @@ func (m *Model) Render() vecty.ComponentOrHTML {
 			s.Render(),
 		),
 	)
-}
-
-type vec struct {
-	x, y int
-}
-
-type gamestate int
-
-const (
-	play gamestate = iota
-	lose
-)
-
-func log(a ...interface{}) {
-	js.Global().Get("console").Call("log", fmt.Sprint(a...))
 }

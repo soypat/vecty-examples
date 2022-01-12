@@ -14,7 +14,10 @@ Add build tags `js,wasm` to go tooling. In VSCode you may add a `.vscode` folder
 
 ```json
 {
-    "go.buildTags": "js,wasm"
+    "go.toolsEnvVars": {
+        "GOOS": "js",
+        "GOARCH": "wasm"
+    }
 }
 ```
 
